@@ -11,9 +11,10 @@ interface Props {
 export default function GalleryEngine({ gallery, onPostClick }: Props) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const completedCount = gallery.posts.filter(p => p.isCompleted).length;
-  const progressPercent = gallery.posts.length > 0 
-    ? Math.round((completedCount / gallery.posts.length) * 100) 
+  const posts = gallery.posts || [];
+  const completedCount = posts.filter(p => p.isCompleted).length;
+  const progressPercent = posts.length > 0 
+    ? Math.round((completedCount / posts.length) * 100) 
     : 0;
 
   return (
@@ -38,7 +39,7 @@ export default function GalleryEngine({ gallery, onPostClick }: Props) {
             />
           </div>
           <div className="text-xs font-bold text-right">
-            {completedCount} / {gallery.posts.length} 개념글 완료
+            {completedCount} / {posts.length} 개념글 완료
           </div>
         </div>
       </div>
@@ -62,7 +63,7 @@ export default function GalleryEngine({ gallery, onPostClick }: Props) {
       {/* Content Area */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {gallery.posts.map((post) => (
+          {posts.map((post) => (
             <button
               key={post.id}
               onClick={() => onPostClick(post)}
@@ -107,8 +108,8 @@ export default function GalleryEngine({ gallery, onPostClick }: Props) {
                 <h3 className="font-bold text-lg">{post.title}</h3>
                 <div className="flex gap-2 mt-1">
                   <span className="text-xs font-bold text-gray-500 uppercase">{post.difficulty}</span>
-                  {post.dependencies.length > 0 && (
-                    <span className="text-xs font-bold text-neon-pink uppercase">선행 필요: {post.dependencies.length}</span>
+                  {(post.dependencies || []).length > 0 && (
+                    <span className="text-xs font-bold text-neon-pink uppercase">선행 필요: {(post.dependencies || []).length}</span>
                   )}
                 </div>
               </div>

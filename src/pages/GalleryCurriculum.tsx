@@ -120,19 +120,22 @@ export default function GalleryCurriculum() {
           "id": "string",
           "title": "Main Title of the Content",
           "description": "Brief overview",
+          "domain": "Subject Domain",
+          "status": "published",
+          "progress": 0,
           "posts": [
             {
               "id": "string",
               "title": "Concept Title",
               "content": "Detailed explanation",
-              "category": "Core Concept | Application | Advanced",
-              "tags": ["tag1", "tag2"],
-              "difficulty": 1-5,
-              "isLocked": boolean
+              "difficulty": "입문" | "초급" | "중급" | "고급" | "심화",
+              "dependencies": [],
+              "isCompleted": false,
+              "order": 1
             }
           ]
         }
-        Generate at least 5-8 distinct concept posts based on the text.
+        Generate at least 5-8 distinct concept posts based on the text. Ensure 'dependencies' is an array of strings (or empty array).
       `;
 
       const generatedGallery = await generateContent<Gallery>(prompt, text, 'gallery');
