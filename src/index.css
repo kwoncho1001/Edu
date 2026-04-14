@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Anton", sans-serif;
+  --font-body: "Inter", sans-serif;
+  
+  --color-neon-green: #00FF00;
+  --color-neon-pink: #FF00FF;
+  --color-brutal-black: #000000;
+  --color-brutal-white: #FFFFFF;
+  --color-brutal-gray: #E5E5E5;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-brutal-white);
+    color: var(--color-brutal-black);
+    overflow-x: hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+  }
+}
+
+/* Brutalist UI Utilities */
+.brutal-border {
+  border: 3px solid var(--color-brutal-black);
+}
+
+.brutal-shadow {
+  box-shadow: 6px 6px 0px var(--color-brutal-black);
+  transition: all 0.1s ease;
+}
+
+.brutal-shadow:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 4px 4px 0px var(--color-brutal-black);
+}
+
+.brutal-shadow:active {
+  transform: translate(6px, 6px);
+  box-shadow: 0px 0px 0px var(--color-brutal-black);
+}
+
+/* Marquee animation */
+.marquee-track {
+  display: flex;
+  animation: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
