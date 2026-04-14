@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronRight, Lock, Unlock, Settings, Play, BarChart3, X, Sparkles, Info, Activity, Trophy, Zap, Compass, FileText, Link as LinkIcon, Microscope, Database } from "lucide-react";
+import { ChevronRight, Lock, Unlock, Settings, Play, BarChart3, X, Sparkles, Info, Activity, Trophy, Zap, Compass, FileText, Link as LinkIcon, Microscope, Database, Languages, Brain, Skull, FlaskConical, MessageSquare, Target, BrainCircuit, Calendar, Upload, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Gallery, ConceptPost } from "@/types/gallery";
 import RoadmapBuilder from "@/components/gallery/RoadmapBuilder";
@@ -9,8 +9,22 @@ import MappingEngine from "@/components/gallery/MappingEngine";
 import VariantAnalyzer from "@/components/gallery/VariantAnalyzer";
 import ExamDatabaseManager from "@/components/gallery/ExamDatabaseManager";
 import EmotionManager from "@/components/gallery/EmotionManager";
+import DopamineToneGenerator from "@/components/gallery/DopamineToneGenerator";
+import AcademicTranslator from "@/components/gallery/AcademicTranslator";
+import MetacognitiveFeedbackLoop from "@/components/gallery/MetacognitiveFeedbackLoop";
+import VillainMissionModule from "@/components/gallery/VillainMissionModule";
+import VillainDashboard from "@/components/gallery/VillainDashboard";
+import ThoughtExperimentSimulator from "@/components/gallery/ThoughtExperimentSimulator";
+import DeepQuizEngine from "@/components/gallery/DeepQuizEngine";
+import EvaluationCenter from "@/components/gallery/EvaluationCenter";
+import KnowledgeCurator from "@/components/gallery/KnowledgeCurator";
+import IntervalScheduler from "@/components/gallery/IntervalScheduler";
+import FileUploadModule from "@/components/gallery/FileUploadModule";
 import { getVisualizationMeta, calculateRewards, designPersonalizedPath, segmentContentToGalleries } from "@/services/galleryService";
+import { generateContent } from "@/services/geminiService";
 import { ExamQuestion, ConceptNode } from "@/services/mappingService";
+import { LearningLog, LearningPlan } from "@/types/metacognition";
+import { MissionResult } from "@/types/villain";
 
 const INITIAL_GALLERY: Gallery = {
   id: "os-101",
@@ -63,11 +77,76 @@ const MOCK_CONCEPT_NODES: ConceptNode[] = [
   { id: 'p2', title: '데드락', summary: '교착 상태의 원인과 방지', level: 1 },
 ];
 
-type ViewMode = 'learn' | 'build' | 'manage' | 'recommend' | 'mapping' | 'variant' | 'database';
+const MOCK_LOGS: LearningLog[] = [
+  { id: 'l1', timestamp: new Date().toISOString(), subject: '운영체제', questionId: 'q1', isCorrect: false, responseTime: 3000, hintUsed: false, confidenceLevel: 5, errorType: 'Concept' },
+  { id: 'l2', timestamp: new Date().toISOString(), subject: '운영체제', questionId: 'q1', isCorrect: false, responseTime: 2500, hintUsed: false, confidenceLevel: 4, errorType: 'Concept' },
+  { id: 'l3', timestamp: new Date().toISOString(), subject: '운영체제', questionId: 'q1', isCorrect: true, responseTime: 12000, hintUsed: true, confidenceLevel: 2 },
+  { id: 'l4', timestamp: new Date().toISOString(), subject: '자료구조', questionId: 'q2', isCorrect: false, responseTime: 4000, hintUsed: false, confidenceLevel: 5, errorType: 'Calculation' },
+  { id: 'l5', timestamp: new Date().toISOString(), subject: '자료구조', questionId: 'q2', isCorrect: true, responseTime: 8000, hintUsed: false, confidenceLevel: 3 },
+  { id: 'l6', timestamp: new Date().toISOString(), subject: '운영체제', questionId: 'q1', isCorrect: false, responseTime: 3000, hintUsed: false, confidenceLevel: 5, errorType: 'Concept' },
+  { id: 'l7', timestamp: new Date().toISOString(), subject: '네트워크', questionId: 'q3', isCorrect: true, responseTime: 5000, hintUsed: false, confidenceLevel: 4 },
+  { id: 'l8', timestamp: new Date().toISOString(), subject: '네트워크', questionId: 'q3', isCorrect: false, responseTime: 15000, hintUsed: true, confidenceLevel: 2, errorType: 'Concept' },
+  { id: 'l9', timestamp: new Date().toISOString(), subject: '데이터베이스', questionId: 'q4', isCorrect: true, responseTime: 6000, hintUsed: false, confidenceLevel: 5 },
+  { id: 'l10', timestamp: new Date().toISOString(), subject: '데이터베이스', questionId: 'q4', isCorrect: false, responseTime: 4000, hintUsed: false, confidenceLevel: 4, errorType: 'Calculation' },
+];
+
+const MOCK_PLAN: LearningPlan = {
+  id: 'plan-1',
+  subject: '운영체제',
+  plannedQuantity: 20,
+  actualQuantity: 12,
+  plannedTime: 60,
+  actualTime: 45,
+  status: 'InProgress'
+};
+
+type ViewMode = 'upload' | 'learn' | 'build' | 'manage' | 'recommend' | 'mapping' | 'variant' | 'database' | 'tone' | 'translate' | 'metacognition' | 'mission' | 'dashboard' | 'thought' | 'quiz' | 'evaluation' | 'curator' | 'scheduler';
 
 export default function GalleryCurriculum() {
   const [gallery, setGallery] = useState<Gallery>(INITIAL_GALLERY);
-  const [viewMode, setViewMode] = useState<ViewMode>('learn');
+  const [viewMode, setViewMode] = useState<ViewMode>('upload');
+  const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleDataExtracted = async (text: string) => {
+    setExtractedText(text);
+    setIsGenerating(true);
+    
+    try {
+      const prompt = `
+        Analyze the provided educational text and generate a structured gallery curriculum.
+        Return a JSON object matching the 'Gallery' interface:
+        {
+          "id": "string",
+          "title": "Main Title of the Content",
+          "description": "Brief overview",
+          "posts": [
+            {
+              "id": "string",
+              "title": "Concept Title",
+              "content": "Detailed explanation",
+              "category": "Core Concept | Application | Advanced",
+              "tags": ["tag1", "tag2"],
+              "difficulty": 1-5,
+              "isLocked": boolean
+            }
+          ]
+        }
+        Generate at least 5-8 distinct concept posts based on the text.
+      `;
+
+      const generatedGallery = await generateContent<Gallery>(prompt, text, 'gallery');
+      
+      setGallery(generatedGallery);
+      setIsGenerating(false);
+      setViewMode('learn');
+    } catch (error) {
+      console.error("Failed to generate content:", error);
+      setIsGenerating(false);
+      // Fallback to mock if API fails for now, but show error in production
+      alert("AI 콘텐츠 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    }
+  };
   const [selectedPost, setSelectedPost] = useState<ConceptPost | null>(null);
   const [selectedQuestion, setSelectedQuestion] = useState<ExamQuestion | null>(MOCK_QUESTIONS[0]);
   const [streak, setStreak] = useState(5);
@@ -141,6 +220,15 @@ export default function GalleryCurriculum() {
         
         <div className="flex flex-wrap gap-2">
           <button 
+            onClick={() => setViewMode('upload')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'upload' ? "bg-brutal-black text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <Upload size={18} /> 자료 업로드
+          </button>
+          <button 
             onClick={() => setViewMode('learn')}
             className={cn(
               "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
@@ -148,6 +236,96 @@ export default function GalleryCurriculum() {
             )}
           >
             <Play size={18} /> 학습하기
+          </button>
+          <button 
+            onClick={() => setViewMode('dashboard')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'dashboard' ? "bg-brutal-black text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <BarChart3 size={18} /> 데이터 대시보드
+          </button>
+          <button 
+            onClick={() => setViewMode('thought')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'thought' ? "bg-brutal-black text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <FlaskConical size={18} /> 사고실험
+          </button>
+          <button 
+            onClick={() => setViewMode('quiz')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'quiz' ? "bg-brutal-black text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <MessageSquare size={18} /> 심화 퀴즈
+          </button>
+          <button 
+            onClick={() => setViewMode('evaluation')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'evaluation' ? "bg-brutal-black text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <Target size={18} /> 응용 평가
+          </button>
+          <button 
+            onClick={() => setViewMode('curator')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'curator' ? "bg-brutal-black text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <BrainCircuit size={18} /> 지식 소환
+          </button>
+          <button 
+            onClick={() => setViewMode('scheduler')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'scheduler' ? "bg-brutal-black text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <Calendar size={18} /> 복습 일정
+          </button>
+          <button 
+            onClick={() => setViewMode('mission')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'mission' ? "bg-brutal-black text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <Skull size={18} /> 빌런 소탕
+          </button>
+          <button 
+            onClick={() => setViewMode('metacognition')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'metacognition' ? "bg-neon-pink text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <Brain size={18} /> 메타인지
+          </button>
+          <button 
+            onClick={() => setViewMode('translate')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'translate' ? "bg-brutal-black text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <Languages size={18} /> 학술 번역
+          </button>
+          <button 
+            onClick={() => setViewMode('tone')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 brutal-border font-bold transition-all",
+              viewMode === 'tone' ? "bg-neon-pink text-white brutal-shadow" : "bg-white hover:bg-brutal-gray"
+            )}
+          >
+            <Zap size={18} /> 도파민 변환
           </button>
           <button 
             onClick={() => setViewMode('database')}
@@ -189,10 +367,77 @@ export default function GalleryCurriculum() {
       </header>
 
       <div className="min-h-[600px]">
-        {viewMode === 'learn' && (
+        {isGenerating && (
+          <div className="flex flex-col items-center justify-center p-20 space-y-6 animate-in zoom-in duration-500">
+            <Loader2 size={64} className="animate-spin text-neon-blue" />
+            <div className="text-2xl font-display uppercase">AI 튜터가 커리큘럼을 설계 중입니다...</div>
+            <p className="text-sm font-bold text-gray-500">텍스트를 분석하여 지식 노드와 상호작용 시나리오를 생성하고 있습니다.</p>
+          </div>
+        )}
+
+        {!isGenerating && viewMode === 'upload' && (
+          <FileUploadModule onDataExtracted={handleDataExtracted} />
+        )}
+
+        {!isGenerating && viewMode === 'learn' && (
           <GalleryEngine 
             gallery={gallery} 
             onPostClick={(post) => setSelectedPost(post)} 
+          />
+        )}
+
+        {viewMode === 'dashboard' && (
+          <VillainDashboard 
+            logs={MOCK_LOGS}
+            onStartMission={(id) => setViewMode('mission')}
+          />
+        )}
+
+        {viewMode === 'thought' && (
+          <ThoughtExperimentSimulator />
+        )}
+
+        {viewMode === 'quiz' && (
+          <DeepQuizEngine />
+        )}
+
+        {viewMode === 'evaluation' && (
+          <EvaluationCenter />
+        )}
+
+        {viewMode === 'curator' && (
+          <KnowledgeCurator />
+        )}
+
+        {viewMode === 'scheduler' && (
+          <IntervalScheduler />
+        )}
+
+        {viewMode === 'mission' && (
+          <VillainMissionModule 
+            logs={MOCK_LOGS}
+            onMissionComplete={(res: MissionResult) => {
+              if (res.isSuccess) setPoints(prev => prev + (res.rewards?.exp || 0));
+            }}
+          />
+        )}
+
+        {viewMode === 'metacognition' && (
+          <MetacognitiveFeedbackLoop 
+            logs={MOCK_LOGS}
+            currentPlan={MOCK_PLAN}
+          />
+        )}
+
+        {viewMode === 'translate' && (
+          <AcademicTranslator />
+        )}
+
+        {viewMode === 'tone' && (
+          <DopamineToneGenerator 
+            sourceText={gallery.posts[0].content}
+            keywords={["프로세스", "스레드"]}
+            onComplete={(res) => console.log("Tone Transformed:", res)}
           />
         )}
 

@@ -40,7 +40,7 @@ export default function VillainIdentifier({ villains, stats, onStartMission }: P
                 <span className="uppercase">{key}</span>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className={cn("w-2 h-2 brutal-border", i <= value / 20 ? "bg-neon-pink" : "bg-gray-700")} />
+                    <div key={i} className={cn("w-2 h-2 brutal-border", i <= (value as number) / 20 ? "bg-neon-pink" : "bg-gray-700")} />
                   ))}
                 </div>
               </div>

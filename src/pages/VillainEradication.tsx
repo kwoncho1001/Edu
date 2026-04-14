@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Skull, Target, ShieldAlert, Zap, Brain, History, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Villain, MetacognitionStats, LearningLog } from "@/types/villain";
+import { Villain, MetacognitionStats } from "@/types/villain";
+import { LearningLog } from "@/types/metacognition";
 import VillainIdentifier from "@/components/villain/VillainIdentifier";
 import MissionRunner from "@/components/villain/MissionRunner";
 

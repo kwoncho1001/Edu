@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Timer, Zap, ShieldAlert, Sword, CheckCircle2, XCircle } from "lucide-react";
-import { Villain, EradicationMission } from "@/types/villain";
+import { Villain } from "@/types/villain";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 
